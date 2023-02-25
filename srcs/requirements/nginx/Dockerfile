@@ -1,27 +1,25 @@
 #install alpine
-FROM debian
+FROM debian:latest
 
-#udate and upgrade alpine
-RUN apk update && apk upgrade
+#install all the program
+RUN apt-get update
+RUN apt-get install -y openssl
 
-#install nginx and openssl
-RUN apk add nginx openssl
-
-#copy nginx config file
-COPY ./default.conf /etc/nginx/conf.d/default.conf
-
-#copy ssl cert and key
-COPY ./nginx.crt /etc/ssl/certs/
-COPY ./nginx.key /etc/ssl/private/
-
-#make dir for nginx pid-file
-RUN mkdir /run/nginx/
-
-#container start with the script
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+#nginx SSL
+RUN mkdir /etc/nginx/ssl
+RUN openssl req -newkey rsa:4096 -x509 -sha256 -days 365 -nodes \
+       -out /etc/nginx/ssl/vbachele.crt \
+       -keyout /etc/nginx/ssl/vbachele.key \
+       -subj "/C=JP/ST=Tokyo/L=Tokyo/O=42 School/OU=yoo-lee/CN=yoo-lee/"
 
 
+COPY ./default.conf /etc/nginx/conf.d
 
-# download debian 
-# download apt nginx
-# 起動　nginx
+#nginx config
+RUN mkdir -p /run/nginx
+
+EXPOSE 443
+
+#start nginx
+CMD ["nginx", "-g",  "daemon of;"]
+
